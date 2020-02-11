@@ -55,6 +55,7 @@ private:
 
   // map of mask and dead strips
   std::map<GEMDetId, EtaPartitionMask> gemMask_;
+  std::vector<GEMDetId> detIdList_;
 
   bool applyMasking_;
 };

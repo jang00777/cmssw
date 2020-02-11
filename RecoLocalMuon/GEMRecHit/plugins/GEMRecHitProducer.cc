@@ -18,6 +18,7 @@
 
 #include <string>
 #include <fstream>
+#include <random>
 
 using namespace edm;
 using namespace std;
@@ -86,6 +87,13 @@ void GEMRecHitProducer::beginRun(const edm::Run& r, const edm::EventSetup& setup
   // Get the GEM Geometry
   setup.get<MuonGeometryRecord>().get(gemGeom_);
 
+  // Save detId list to mask (Testing)
+  for (auto gems : gemGeom_->etaPartitions()) {
+    GEMDetId gemId = gems->id();
+    if (gemId.station() != 2 || gemId.ring() != 1) continue;
+    detIdList_.push_back(gemId);
+  }
+
   if (applyMasking_) {
     // Getting the masked-strip information
     if (maskSource_ == MaskSource::EventSetup) {
@@ -130,6 +138,32 @@ void GEMRecHitProducer::produce(Event& event, const EventSetup& setup) {
   Handle<GEMDigiCollection> digis;
   event.getByToken(theGEMDigiToken, digis);
 
+  // Generate random number
+  std::map<GEMDetId, bool> etaMask;
+  std::random_device rd; // obtain a random number from hardware
+  std::mt19937 eng(rd()); // seed the generator
+  std::uniform_real_distribution<> randomFloat(0, 1);
+
+  float probabilityM15 = 0.0020;
+  float probabilityM26 = 0.0028;
+  float probabilityM37 = 0.0045;
+  float probabilityM48 = 0.0092;
+
+  std::vector<float> deadProb;
+  deadProb.push_back(probabilityM15);
+  deadProb.push_back(probabilityM26);
+  deadProb.push_back(probabilityM37);
+  deadProb.push_back(probabilityM48);
+
+  // Masking (test)
+  for (size_t i=0; i < detIdList_.size(); ++i) {
+    auto randomNumber = randomFloat(eng);
+    if ( (detIdList_[i].roll() == 1 || detIdList_[i].roll() == 5) && (randomNumber < deadProb[0]) ) etaMask[detIdList_[i]] = true; 
+    if ( (detIdList_[i].roll() == 2 || detIdList_[i].roll() == 6) && (randomNumber < deadProb[1]) ) etaMask[detIdList_[i]] = true; 
+    if ( (detIdList_[i].roll() == 3 || detIdList_[i].roll() == 7) && (randomNumber < deadProb[2]) ) etaMask[detIdList_[i]] = true; 
+    if ( (detIdList_[i].roll() == 4 || detIdList_[i].roll() == 8) && (randomNumber < deadProb[3]) ) etaMask[detIdList_[i]] = true; 
+  }
+
   // Pass the EventSetup to the algo
   theAlgo->setES(setup);
 
@@ -140,6 +174,8 @@ void GEMRecHitProducer::produce(Event& event, const EventSetup& setup) {
   for (auto gemdgIt = digis->begin(); gemdgIt != digis->end(); ++gemdgIt) {
     // The layerId
     const GEMDetId& gemId = (*gemdgIt).first;
+
+    if (etaMask[gemId] == true) { cout << "Skip digis on a dead board : " << gemId << endl; continue; }
 
     // Get the GeomDet from the setup
     const GEMEtaPartition* roll = gemGeom_->etaPartition(gemId);
