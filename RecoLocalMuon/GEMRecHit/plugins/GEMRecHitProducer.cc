@@ -144,24 +144,17 @@ void GEMRecHitProducer::produce(Event& event, const EventSetup& setup) {
   std::mt19937 eng(rd()); // seed the generator
   std::uniform_real_distribution<> randomFloat(0, 1);
 
-  float probabilityM15 = 0.0020;
-  float probabilityM26 = 0.0028;
-  float probabilityM37 = 0.0045;
-  float probabilityM48 = 0.0092;
-
-  std::vector<float> deadProb;
-  deadProb.push_back(probabilityM15);
-  deadProb.push_back(probabilityM26);
-  deadProb.push_back(probabilityM37);
-  deadProb.push_back(probabilityM48);
-
   // Masking (test)
   for (size_t i=0; i < detIdList_.size(); ++i) {
     auto randomNumber = randomFloat(eng);
-    if ( (detIdList_[i].roll() == 1 || detIdList_[i].roll() == 5) && (randomNumber < deadProb[0]) ) etaMask[detIdList_[i]] = true; 
-    if ( (detIdList_[i].roll() == 2 || detIdList_[i].roll() == 6) && (randomNumber < deadProb[1]) ) etaMask[detIdList_[i]] = true; 
-    if ( (detIdList_[i].roll() == 3 || detIdList_[i].roll() == 7) && (randomNumber < deadProb[2]) ) etaMask[detIdList_[i]] = true; 
-    if ( (detIdList_[i].roll() == 4 || detIdList_[i].roll() == 8) && (randomNumber < deadProb[3]) ) etaMask[detIdList_[i]] = true; 
+    if ( (detIdList_[i].roll() == 1) && (randomNumber < 0.0009) ) etaMask[detIdList_[i]] = true; 
+    if ( (detIdList_[i].roll() == 2) && (randomNumber < 0.0011) ) etaMask[detIdList_[i]] = true; 
+    if ( (detIdList_[i].roll() == 3) && (randomNumber < 0.0013) ) etaMask[detIdList_[i]] = true; 
+    if ( (detIdList_[i].roll() == 4) && (randomNumber < 0.0016) ) etaMask[detIdList_[i]] = true; 
+    if ( (detIdList_[i].roll() == 5) && (randomNumber < 0.0020) ) etaMask[detIdList_[i]] = true; 
+    if ( (detIdList_[i].roll() == 6) && (randomNumber < 0.0025) ) etaMask[detIdList_[i]] = true; 
+    if ( (detIdList_[i].roll() == 7) && (randomNumber < 0.0040) ) etaMask[detIdList_[i]] = true; 
+    if ( (detIdList_[i].roll() == 8) && (randomNumber < 0.0052) ) etaMask[detIdList_[i]] = true; 
   }
 
   // Pass the EventSetup to the algo
